@@ -1,0 +1,62 @@
+﻿@model CountriesEntry.Entities.SystemUser
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<script>
+    function countryChanged() {
+        var selectedCountryId = $("#ddlCountries").val();
+        console.log(selectedCountryId);
+
+        $.ajax({
+            url: `/api/citiesapi/bycountry/${selectedCountryId}`,
+            method: 'get',
+            success: function (data) {
+                console.log(data);
+                var ddl = $("#CityId");
+                ddl.children().remove();
+
+                let options = data.map(e => $(`<option value='${e.id}'>${e.name}</option>`));
+
+                ddl.append(options);
+            }
+        });
+    }
+</script>
+
+<h4>SystemUser</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Country</label>
+                <select id="ddlCountries" onchange="countryChanged()" class ="form-control" asp-items="ViewBag.Countries"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="CityId" class="control-label"></label>
+                <select asp-for="CityId" class ="form-control" asp-items="ViewBag.CityId"></select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
