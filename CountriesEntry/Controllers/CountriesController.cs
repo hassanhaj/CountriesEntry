@@ -1,5 +1,6 @@
 ﻿using CountriesEntry.Entities;
 using CountriesEntry.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -7,16 +8,20 @@ using System.Threading.Tasks;
 
 namespace CountriesEntry.Controllers
 {
+    [Authorize]
     public class CountriesController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly RequestInfo _requestInfo;
 
-        public CountriesController(AppDbContext context)
+        public CountriesController(AppDbContext context, RequestInfo requestInfo)
         {
             _context = context;
+            this._requestInfo = requestInfo;
         }
 
         // GET: Countries
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string name, string countryCode)
         {
             var result = await _context.Countries
@@ -43,6 +48,7 @@ namespace CountriesEntry.Controllers
                 .Include(e => e.Cities)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
+            ViewData["username"] = User.Identity.Name;
             ViewData["Cities"] = country.Cities;
 
             if (country == null)
