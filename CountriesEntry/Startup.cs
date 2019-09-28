@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using CountriesEntry.Controllers;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -7,7 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Threading.Tasks;
 
 namespace CountriesEntry
 {
@@ -20,7 +23,8 @@ namespace CountriesEntry
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+        // This method gets called by the runtime. 
+        // Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddIdentity<IdentityUser, IdentityRole>(config =>
@@ -54,7 +58,13 @@ namespace CountriesEntry
             });
 
 
-            services.AddMvc()
+            services.AddMvc(options=> {
+                options.Filters.Add(typeof(ValidateCountry));
+                options.Filters.Add(typeof(CustomExceptionFilter));
+                options.Filters.Add(typeof(CacheResourceFilter));
+            })
+          //      options.Filters.Add(typeof(CustomExceptionFilter));
+              //      options.Filters.Add(typeof(ValidationActionFilter))         // By type
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddRazorPagesOptions(options =>
                 {
@@ -73,22 +83,35 @@ namespace CountriesEntry
             services.AddScoped<RequestInfo>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        // This method gets called by the runtime. 
+        // Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger)
         {
+            logger.LogWarning("aaa {name}", new[] { "myName" });
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseExceptionHandler("/Home");
             }
 
-            app.UseStaticFiles()
-                .UseCookiePolicy()
-                .UseAuthentication()
-                .UseRequestInfoMiddleware();
+          //  app.Run((context) => context.Response.WriteAsync("aa"));
+
+            app.Use(async (context, next) =>
+            {
+                logger.LogInformation("Request Started at: " + DateTime.Now.ToString("HH:mm:ss"));
+                await next.Invoke();
+                logger.LogInformation("Request Finished at: " + DateTime.Now.ToString("HH:mm:ss"));
+            });
+            app.UseCookiePolicy();
+            app.UseAuthentication();
+            app.UseRequestInfoMiddleware();
+
+            app.UseStaticFiles();
+            //app.UseFileServer();
+            //app.UseDirectoryBrowser();
 
             app.UseMvc(routes =>
             {

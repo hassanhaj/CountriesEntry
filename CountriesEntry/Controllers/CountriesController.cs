@@ -2,17 +2,33 @@
 using CountriesEntry.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace CountriesEntry.Controllers
 {
     [Authorize]
+    //[ValidateCountry]
     public class CountriesController : Controller
     {
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            // Executing
+            var param = context.ActionArguments;
+            await base.OnActionExecutionAsync(context, next);
+            // Executed
+            var result = context.Result as ViewResult;
+            routeData = context.RouteData.ToString();
+        }
+
         private readonly AppDbContext _context;
         private readonly RequestInfo _requestInfo;
+        private string routeData = null;
 
         public CountriesController(AppDbContext context, RequestInfo requestInfo)
         {
@@ -22,6 +38,7 @@ namespace CountriesEntry.Controllers
 
         // GET: Countries
         [AllowAnonymous]
+        [ResponseCache(VaryByHeader = "User-Agent", Duration = 60 * 60)]
         public async Task<IActionResult> Index(string name, string countryCode)
         {
             var result = await _context.Countries
@@ -37,6 +54,7 @@ namespace CountriesEntry.Controllers
         }
 
         // GET: Countries/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -60,6 +78,7 @@ namespace CountriesEntry.Controllers
         }
 
         // GET: Countries/Create
+        [AddHeaderFilter]
         public IActionResult Create()
         {
             return View();
@@ -70,6 +89,7 @@ namespace CountriesEntry.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        //[ValidateCountry(]
         public async Task<IActionResult> Create([Bind("Id,Name,CountryCode")] Country country)
         {
             if (ModelState.IsValid)
@@ -148,6 +168,16 @@ namespace CountriesEntry.Controllers
             }
 
             return View(country);
+        }
+
+        public IActionResult GetContent()
+        {
+            return new ContentResult
+            {
+              Content =  "Country is Jordan",
+              ContentType = "text",
+              StatusCode = 200
+            };
         }
 
         // POST: Countries/Delete/5

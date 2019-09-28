@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace CountriesEntry
@@ -18,10 +17,10 @@ namespace CountriesEntry
         public async Task Invoke(HttpContext context, RequestInfo requestInfo)
         {
             requestInfo.Username = context.User.Identity.Name;
-            context.Response.ContentType = "text/html";
-            context.Response.StatusCode = 200;
-            await context.Response.WriteAsync("Hello");
-           await _next.Invoke(context);
+            //context.Response.ContentType = "text/html";
+            //context.Response.StatusCode = 200;
+            //await context.Response.WriteAsync("Hello");
+            await _next.Invoke(context);
         }
     }
 
